@@ -1,6 +1,11 @@
 ---
+<<<<<<< HEAD
 // import { client } from '../../lib/sanity'
 import { client } from '@/lib/sanity'
+=======
+import { client } from '../lib/sanity'
+
+>>>>>>> 939026adce7f4fc7e80b9dc6d1534453c1ccebdb
 // Consulta GROQ: todos los artistas publicados
 const artists = await client.fetch(`*[_type == "artist"]{_id, name, roles}`)
 ---
