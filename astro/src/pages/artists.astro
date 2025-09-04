@@ -1,5 +1,5 @@
 ---
-import { client } from '../../lib/sanity'
+import { client } from '../lib/sanity'
 
 // Consulta GROQ: todos los artistas publicados
 const artists = await client.fetch(`*[_type == "artist"]{_id, name, roles}`)
