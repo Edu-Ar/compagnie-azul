@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   output: 'server',
-  adapter: node(), // ← Node server adapter (replaced Cloudflare Workers)
+  adapter: node({
+    mode: 'standalone',
+  }),
   vite: {
     resolve: {
       alias: {
