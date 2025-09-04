@@ -1,0 +1,21 @@
+{
+  "name": "compagnie-azul-web",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@portabletext/to-html": "^3.0.0",
+    "@sanity/client": "^7.10.0",
+    "@sanity/image-url": "^1.2.0",
+    "astro": "^5.13.3",
+    "groq": "^4.6.0"
+  },
+  "devDependencies": {
+    "@astrojs/node": "^9.4.3"
+  }
+}

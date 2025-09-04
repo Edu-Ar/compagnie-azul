@@ -1,0 +1,30 @@
+---
+import {client} from '../lib/sanity'
+import {NAV_QUERY} from '../lib/queries'
+
+const { lang = 'fr' } = Astro.props as { lang: 'fr'|'es'|'en' }
+const data = await client.fetch(NAV_QUERY, {lang})
+const items = data?.items ?? []
+---
+
+<nav>
+  <ul>
+    {items.map((it: any) => (
+      <li>
+        {it.url ? <a href={it.url}>{it.label}</a> : <span>{it.label}</span>}
+        {it.children && it.children.length > 0 && (
+          <ul>
+            {it.children.map((c: any) => (
+              <li>{c.url ? <a href={c.url}>{c.label}</a> : <span>{c.label}</span>}</li>
+            ))}
+          </ul>
+        )}
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<style>
+nav ul { list-style: none; padding: 0; margin: 0; display: flex; gap: 1rem; }
+nav ul ul { display:block; margin-top:.4rem; }
+</style>

@@ -1,0 +1,28 @@
+---
+import { client } from '../../lib/sanity'
+
+const works = await client.fetch(`*[_type == "work"]{
+  _id,
+  title,
+  year,
+  "artists": credits[]->name
+}`)
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Œuvres</title>
+  </head>
+  <body>
+    <h1>Œuvres / Projets</h1>
+    <ul>
+      {works.map((w) => (
+        <li key={w._id}>
+          <strong>{w.title}</strong>{w.year ? ` (${w.year})` : ''}{' '}
+          {w.artists?.length ? `— ${w.artists.join(', ')}` : ''}
+        </li>
+      ))}
+    </ul>
+  </body>
+</html>

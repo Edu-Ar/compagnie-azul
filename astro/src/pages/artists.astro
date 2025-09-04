@@ -1,0 +1,24 @@
+---
+import { client } from '../../lib/sanity'
+
+// Consulta GROQ: todos los artistas publicados
+const artists = await client.fetch(`*[_type == "artist"]{_id, name, roles}`)
+---
+
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <title>Artists</title>
+  </head>
+  <body>
+    <h1>Liste des Artistes</h1>
+    <ul>
+      {artists.map((artist) => (
+        <li key={artist._id}>
+          <strong>{artist.name}</strong>
+          {artist.roles && ` — ${artist.roles.join(', ')}`}
+        </li>
+      ))}
+    </ul>
+  </body>
+</html>

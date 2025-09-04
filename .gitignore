@@ -1,0 +1,10 @@
+# Ignorar la carpeta que no quiero subir
+galerias/
+
+# Ignorar archivos de entorno con claves secretas (¡muy importante!)
+.env
+.env.*
+
+# Ignorar archivos con notas mias 
+Etapa 2.docx
+sanity init.docx

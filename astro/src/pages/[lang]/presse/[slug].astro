@@ -1,0 +1,38 @@
+---
+export const prerender = false
+import groq from 'groq'
+import { sanity } from '../../../lib/sanity'
+
+const { lang, slug } = Astro.params
+const LANGS = new Set(['fr','es','en'])
+if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
+
+// Variante en el idioma o fallback a FR por slug
+const q = groq`coalesce(
+  *[_type=="pressItem" && language==$lang && slug.current==$slug][0],
+  *[_type=="pressItem" && language=="fr"  && slug.current==$slug][0]
+){
+  title, outlet, date, url, file
+}`
+const item = await sanity.fetch(q, { lang, slug })
+if (!item) return Astro.redirect(`/${lang}/presse`)
+---
+
+<html lang={lang}>
+  <head><meta charset="utf-8" /><title>{item.title}</title><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+  <body>
+    <header><a href={`/${lang}/presse`}>← Presse</a><h1>{item.title}</h1></header>
+    <main>
+      <p>{item.outlet} — {item.date}</p>
+      {item.url && <p><a href={item.url} target="_blank">Ver online</a></p>}
+      {item.file && (
+        <p>
+          <a
+            href={`https://cdn.sanity.io/files/${import.meta.env.SANITY_PROJECT_ID}/${import.meta.env.SANITY_DATASET}/${item.file.asset._ref.split('-').slice(1).join('-')}`}
+            target="_blank"
+          >Descargar PDF</a>
+        </p>
+      )}
+    </main>
+  </body>
+</html>

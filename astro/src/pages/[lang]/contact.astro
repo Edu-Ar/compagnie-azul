@@ -1,0 +1,40 @@
+---
+export const prerender = false
+import groq from 'groq'
+import { sanity } from '../../lib/sanity'
+import { toHTML } from '@portabletext/to-html'
+
+const { lang } = Astro.params
+const LANGS = new Set(['fr','es','en'])
+if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
+
+const q = groq`{
+  "page": coalesce(
+    *[_type=="legalPage" && language==$lang && slug.current=="contact"][0],
+    *[_type=="legalPage" && language=="fr"  && slug.current=="contact"][0]
+  ){ title, body },
+  "settings": coalesce(
+    *[_type=="siteSettings" && language==$lang][0]{social,contactEmail},
+    *[_type=="siteSettings" && language=="fr"][0]{social,contactEmail}
+  )
+}`
+
+const data = await sanity.fetch(q, { lang })
+const html = toHTML(data?.page?.body || [])
+---
+<html lang={lang}>
+  <head><meta charset="utf-8" /><title>{data?.page?.title || 'Contact'}</title><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+  <body>
+    <header><a href={`/${lang}`}>← {lang.toUpperCase()}</a><h1>{data?.page?.title || 'Contact'}</h1></header>
+    <main>
+      <div set:html={html}></div>
+      {(data?.settings?.social || data?.settings?.contactEmail) && (
+        <p style="margin-top:1rem">
+          {data.settings.social?.instagram && <a href={data.settings.social.instagram}>Instagram</a>}{" "}
+          {data.settings.social?.facebook  && <a href={data.settings.social.facebook}>Facebook</a>}{" "}
+          {data.settings.contactEmail && <span> · <a href={`mailto:${data.settings.contactEmail}`}>{data.settings.contactEmail}</a></span>}
+        </p>
+      )}
+    </main>
+  </body>
+</html>

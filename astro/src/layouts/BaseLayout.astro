@@ -1,0 +1,129 @@
+---
+import { toHTML } from '@portabletext/to-html'
+
+interface NavItem { label?: string; path?: string; href?: string }
+
+interface Props {
+  lang: 'fr' | 'es' | 'en'
+  title?: string
+  settings?: any
+}
+
+const { lang, title = 'Compagnie Azul', settings } = Astro.props
+
+// Normalizamos por si settings llega “plano” o {settings, nav, footer}
+const S = {
+  site: settings?.settings ?? settings ?? {},
+  nav: settings?.nav ?? {},
+  footer: settings?.footer ?? {},
+}
+
+const navItems: NavItem[] = Array.isArray(S.nav.items) ? S.nav.items : []
+
+const footerHtml = S.footer?.note ? toHTML(S.footer.note) : ''
+
+const L = {
+  fr: { home: 'Accueil', projets: 'Projets', presse: 'Presse', aPropos: 'À propos', contact: 'Contact' },
+  es: { home: 'Inicio',  projets: 'Proyectos', presse: 'Prensa',  aPropos: 'Acerca de', contact: 'Contacto' },
+  en: { home: 'Home',    projets: 'Projects',  presse: 'Press',   aPropos: 'About',     contact: 'Contact' },
+}[lang]
+
+// --- Resolver href de forma segura:
+function toHref(it: NavItem | string): string {
+  // Si viene como string: lo tratamos como path interno
+  if (typeof it === 'string') {
+    const raw = it.trim()
+    const path = raw.startsWith('/') ? raw : `/${raw}`
+    return `/${lang}${path}`
+  }
+  // Si es objeto y tiene href externo:
+  if (it?.href) return String(it.href)
+  // Si es objeto y tiene path interno:
+  const p = String(it?.path ?? '').trim()
+  if (p) {
+    const path = p.startsWith('/') ? p : `/${p}`
+    return `/${lang}${path}`
+  }
+  // Fallback: home del idioma
+  return `/${lang}`
+}
+---
+<html lang={lang}>
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      :root { --max: 1100px; --muted:#666; font-family: system-ui, sans-serif; }
+      header, main, footer { max-width: var(--max); margin: 1.25rem auto; padding: 0 1rem; }
+      header { display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+      nav a { text-decoration:none; margin-right: .75rem; color: inherit; }
+      .lang a { margin-left:.5rem; }
+      .brand { font-weight:600; letter-spacing:.02em; }
+      footer { border-top:1px solid #e5e5e5; padding-top:1rem; color: var(--muted); font-size:.95rem; }
+      footer a { color: inherit; }
+      .spacer { height: .5rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="brand"><a href={`/${lang}`} style="text-decoration:none;">Compagnie Azul</a></div>
+
+      <nav aria-label="primary">
+        {
+          Array.isArray(S.nav.items) && S.nav.items.filter((it) => {
+            // Aceptar solo objetos con path/href; ignorar strings pegados
+            return it && typeof it === 'object' && (it.path || it.href)
+          }).length
+            ? S.nav.items
+                .filter((it) => it && typeof it === 'object' && (it.path || it.href))
+                .map((it) => {
+                  const label = it.label ?? it.path ?? it.href ?? ''
+                  if (it.href) {
+                    return <a href={String(it.href)} target="_blank" rel="noopener">{label}</a>
+                  }
+                  const raw = String(it.path ?? '').trim()
+                  const path = raw.startsWith('/') ? raw : `/${raw}`
+                  return <a href={`/${lang}${path}`}>{label}</a>
+                })
+            : (
+              <>
+                <a href={`/${lang}`}>Accueil</a>
+                <a href={`/${lang}/projets/spectacles`}>Spectacles</a>
+                <a href={`/${lang}/projets/photo-video`}>Photographie & art-vidéo</a>
+                <a href={`/${lang}/projets/mediation`}>Médiation</a>
+                <a href={`/${lang}/presse`}>Presse</a>
+                <a href={`/${lang}/a-propos`}>À propos</a>
+                <a href={`/${lang}/contact`}>Contact</a>
+              </>
+            )
+        }
+      </nav>
+      
+
+      <div class="lang" aria-label="language">
+        <a href="/fr">FR</a> | <a href="/es">ES</a> | <a href="/en">EN</a>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer>
+      <div class="spacer"></div>
+
+      {(S.site?.social?.instagram || S.site?.social?.facebook || S.site?.contactEmail) && (
+        <p>
+          {S.site.social?.instagram && <a href={S.site.social.instagram} target="_blank" rel="noopener">Instagram</a>}{" "}
+          {S.site.social?.facebook  && <>· <a href={S.site.social.facebook} target="_blank" rel="noopener">Facebook</a></>}
+          {S.site.contactEmail && <> · <a href={`mailto:${S.site.contactEmail}`}>{S.site.contactEmail}</a></>}
+        </p>
+      )}
+
+      {footerHtml && <div set:html={footerHtml}></div>}
+
+      <p>© {new Date().getFullYear()} Compagnie Azul</p>
+    </footer>
+  </body>
+</html>

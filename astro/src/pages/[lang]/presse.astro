@@ -1,0 +1,34 @@
+---
+export const prerender = false
+import groq from 'groq'
+import { sanity } from '../../lib/sanity'
+
+const { lang } = Astro.params
+const LANGS = new Set(['fr','es','en'])
+if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
+
+// Lista en el idioma pedido o cae a FR si está vacío
+const q = groq`{
+  "items": coalesce(
+    *[_type=="pressItem" && language==$lang]|order(date desc){title,outlet,date,"slug":slug.current},
+    *[_type=="pressItem" && language=="fr"]|order(date desc){title,outlet,date,"slug":slug.current}
+  )
+}`
+const data = await sanity.fetch(q, { lang })
+---
+
+<html lang={lang}>
+  <head><meta charset="utf-8" /><title>Presse</title><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+  <body>
+    <header><a href={`/${lang}`}>← {lang.toUpperCase()}</a><h1>Presse</h1></header>
+    <main>
+      {data.items?.length ? (
+        <ul>
+          {data.items.map((p) => (
+            <li><a href={`/${lang}/presse/${p.slug}`}>{p.title}</a> — {p.outlet} ({p.date})</li>
+          ))}
+        </ul>
+      ) : <p>Sin notas.</p>}
+    </main>
+  </body>
+</html>

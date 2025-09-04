@@ -1,0 +1,104 @@
+---
+export const prerender = false
+
+import groq from 'groq'
+import { sanity } from '../../lib/sanity'
+import { urlFor } from '../../lib/image'
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { getSettings } from '../../lib/getSettings'
+
+const { lang } = Astro.params
+const LANGS = new Set(['fr','es','en'])
+if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
+
+// 1) Leemos el homeHero del idioma (o FR si falta) + backups por categoría
+const q = groq`{
+  "hero": coalesce(
+    *[_type=="homeHero" && language==$lang][0],
+    *[_type=="homeHero" && language=="fr"][0]
+  ){
+    imgSpectacles, imgPhotoVideo, imgMediation,
+    labelSpectacles, labelPhotoVideo, labelMediation
+  },
+  // Backups (si falta alguna imagen en hero, usamos una portada de proyecto)
+  "spec": *[_type=="project" && language in [$lang,"fr"] && category=="spectacles" && defined(coverImage)][0]{coverImage},
+  "pv":   *[_type=="project" && language in [$lang,"fr"] && category=="photo-video" && defined(coverImage)][0]{coverImage},
+  "med":  *[_type=="project" && language in [$lang,"fr"] && category=="mediation"  && defined(coverImage)][0]{coverImage}
+}`
+
+const { hero, spec, pv, med } = await sanity.fetch(q, { lang })
+const settings = await getSettings(lang)
+
+const LABELS = {
+  fr: { spectacles: 'Spectacles', pv: 'Photographie & art-vidéo', mediation: 'Médiation' },
+  es: { spectacles: 'Espectáculos', pv: 'Fotografía y videoarte',  mediation: 'Mediación' },
+  en: { spectacles: 'Performances', pv: 'Photo & video art',       mediation: 'Mediation' },
+}[lang]
+
+// Helpers: elegir imagen/etiqueta con prioridad hero > backup
+const imgSpec = hero?.imgSpectacles || spec?.coverImage
+const imgPV   = hero?.imgPhotoVideo || pv?.coverImage
+const imgMed  = hero?.imgMediation  || med?.coverImage
+
+const labelSpec = hero?.labelSpectacles || LABELS.spectacles
+const labelPV   = hero?.labelPhotoVideo || LABELS.pv
+const labelMed  = hero?.labelMediation  || LABELS.mediation
+---
+
+<BaseLayout lang={lang as any} title={settings?.siteTitle || 'Compagnie Azul'} settings={settings}>
+  <style>
+    :root { --h: min(58vh, 540px); }
+    .grid3 { display:grid; gap:12px; grid-template-columns:1fr; }
+    @media (min-width:820px){ .grid3{ grid-template-columns:repeat(3,1fr); } }
+    .tile { position:relative; overflow:hidden; min-height:var(--h); border-radius:8px; }
+    .tile > a {
+      position:absolute; inset:0; display:grid; place-items:center;
+      text-decoration:none; color:#fff; z-index:3; outline:none;
+    }
+    .bg {
+      position:absolute; inset:0; z-index:1; background:#111;
+      background-size:cover; background-position:center; transform:scale(1.02);
+      transition:transform .35s ease;
+    }
+    .veil {
+      position:absolute; inset:0; z-index:2;
+      background:linear-gradient(0deg, rgba(0,0,0,.55), rgba(0,0,0,.35));
+      transition:background .35s ease;
+    }
+    .label {
+      position:relative; z-index:4; font-size:clamp(1.2rem,2.2vw,2rem);
+      font-weight:700; letter-spacing:.02em; padding:.4rem .9rem;
+      border:2px solid rgba(255,255,255,.9); background:rgba(0,0,0,.18);
+      backdrop-filter:blur(2px); border-radius:.55rem; transition:transform .25s ease;
+    }
+    .tile:hover .bg{ transform:scale(1.06); }
+    .tile:hover .veil{ background:linear-gradient(0deg, rgba(0,0,0,.6), rgba(0,0,0,.45)); }
+    .tile:has(a:focus-visible) .label{ box-shadow:0 0 0 4px rgba(255,255,255,.35) inset; }
+  </style>
+
+  <section class="grid3" aria-label="Secciones principales">
+    <div class="tile">
+      <span class="bg" style={imgSpec ? `background-image:url(${urlFor(imgSpec).width(2200).auto('format').url()})` : 'background:#111'} />
+      <span class="veil" />
+      <a href={`/${lang}/projets/spectacles`} aria-label={labelSpec}>
+        <span class="label">{labelSpec}</span>
+      </a>
+    </div>
+
+    <div class="tile">
+      <span class="bg" style={imgPV ? `background-image:url(${urlFor(imgPV).width(2200).auto('format').url()})` : 'background:#222'} />
+      <span class="veil" />
+      <a href={`/${lang}/projets/photo-video`} aria-label={labelPV}>
+        <span class="label">{labelPV}</span>
+      </a>
+    </div>
+
+    <div class="tile">
+      <span class="bg" style={imgMed ? `background-image:url(${urlFor(imgMed).width(2200).auto('format').url()})` : 'background:#333'} />
+      <span class="veil" />
+      <a href={`/${lang}/projets/mediation`} aria-label={labelMed}>
+        <span class="label">{labelMed}</span>
+      </a>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,43 @@
+---
+import {client} from '../lib/sanity'
+import {FOOTER_QUERY} from '../lib/queries'
+
+const { lang = 'fr' } = Astro.props as { lang: 'fr'|'es'|'en' }
+const data = await client.fetch(FOOTER_QUERY, {lang})
+const columns = data?.columns ?? []
+const legal = data?.legal ?? []
+---
+
+<footer>
+  <div class="cols">
+    {columns.map((col: any) => (
+      <div class="col">
+        <h4>{col.title}</h4>
+        <ul>
+          {col.links?.map((l: any) => (
+            <li>{l.url ? <a href={l.url}>{l.label}</a> : <span>{l.label}</span>}</li>
+          ))}
+        </ul>
+      </div>
+    ))}
+  </div>
+  {legal?.length > 0 && (
+    <div class="legal">
+      {legal.map((l: any, i: number) => (
+        <>
+          {i>0 && ' · '}
+          {l.url ? <a href={l.url}>{l.label}</a> : <span>{l.label}</span>}
+        </>
+      ))}
+    </div>
+  )}
+</footer>
+
+<style>
+footer { margin-top: 3rem; padding: 2rem 0; border-top: 1px solid #ddd; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 1rem; }
+.col h4 { margin: 0 0 .5rem 0; font-size: 1rem; }
+.col ul { list-style: none; padding: 0; margin: 0; }
+.col li { margin: .25rem 0; }
+.legal { margin-top: 1rem; font-size: .9rem; color: #666; }
+</style>
