@@ -2,7 +2,9 @@
 export const prerender = false
 
 import groq from 'groq'
-import { sanity } from '../../lib/sanity'
+// import { sanity } from '../../lib/sanity'
+import { sanity } from '@/lib/sanity'
+
 
 const { lang } = Astro.params
 const LANGS = new Set(['fr','es','en'])
