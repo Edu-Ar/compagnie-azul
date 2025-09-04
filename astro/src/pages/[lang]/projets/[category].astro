@@ -1,19 +1,25 @@
 ---
+// ARCHIVO: [category].astro - CÓDIGO CORREGIDO
+
 export const prerender = false
 
 import groq from 'groq'
 import { sanity } from '../../../lib/sanity'
 import { urlFor } from '../../../lib/image'
+// 1. IMPORTAR EL LAYOUT Y LAS CONFIGURACIONES
+import BaseLayout from '../../../layouts/BaseLayout.astro'
+import { getSettings } from '../../../lib/getSettings'
 
 const { lang, category } = Astro.params
 
-// validar idioma y categoría
 const LANGS = new Set(['fr','es','en'])
 const CATS  = new Set(['spectacles','photo-video','mediation'])
 if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
 if (!category || !CATS.has(category)) return Astro.redirect(`/${lang}`)
 
-// consulta GROQ (se ejecuta en JS, no inline)
+// 2. OBTENER LAS CONFIGURACIONES (NECESARIO PARA EL LAYOUT)
+const settings = await getSettings(lang)
+
 const q = groq`*[_type=="project" && language==$lang && category==$cat]
   | order(title asc){
     title,
@@ -24,44 +30,37 @@ const q = groq`*[_type=="project" && language==$lang && category==$cat]
 const items = await sanity.fetch(q, { lang, cat: category })
 ---
 
-<html lang={lang}>
-  <head>
-    <meta charset="utf-8" />
-    <title>{category} – {lang.toUpperCase()}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <style>
-      :root { font-family: system-ui, sans-serif; }
-      main, header { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
-      .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
-      a.card { text-decoration: none; color: inherit; border: 1px solid #ddd; padding: .75rem; border-radius: .5rem; }
-      img { width: 100%; height: auto; display: block; }
-    </style>
-  </head>
-  <body>
-    <header>
-      <a href={`/${lang}`}>← {lang.toUpperCase()}</a>
-      <h1>Projets — {category}</h1>
-    </header>
+<BaseLayout lang={lang as any} title={category} settings={settings}>
+  <style>
+    /* Los estilos pueden permanecer aquí o moverlos a un <style> global */
+    main, header { max-width: 1100px; margin: 1.5rem auto; padding: 0 1rem; }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+    a.card { text-decoration: none; color: inherit; border: 1px solid #ddd; padding: .75rem; border-radius: .5rem; }
+    img { width: 100%; height: auto; display: block; }
+  </style>
+  
+  <header>
+    <h1>Projets — {category}</h1>
+  </header>
 
-    <main>
-      {items?.length ? (
-        <div class="grid">
-          {items.map((p) => (
-            <a class="card" href={`/${lang}/${p.slug}`}>
-              {p.coverImage && (
-                <img
-                  src={urlFor(p.coverImage).width(800).auto('format').url()}
-                  alt={p.coverImage.alt || ''}
-                  loading="lazy"
-                />
-              )}
-              <div>{p.title}</div>
-            </a>
-          ))}
-        </div>
-      ) : (
-        <p>Sin elementos en esta categoría.</p>
-      )}
-    </main>
-  </body>
-</html>
+  <main>
+    {items?.length ? (
+      <div class="grid">
+        {items.map((p) => (
+          <a class="card" href={`/${lang}/${p.slug}`}>
+            {p.coverImage && (
+              <img
+                src={urlFor(p.coverImage).width(800).auto('format').url()}
+                alt={p.coverImage.alt || ''}
+                loading="lazy"
+              />
+            )}
+            <div>{p.title}</div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p>Sin elementos en esta categoría.</p>
+    )}
+  </main>
+</BaseLayout>

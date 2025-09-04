@@ -1,0 +1,24 @@
+---
+// ARCHIVO: a-propos.astro - CÓDIGO COMPLETO Y CORREGIDO
+
+import BaseLayout from '../../layouts/BaseLayout.astro'
+import { getSettings } from '../../lib/getSettings'
+import { toHTML } from '@portabletext/to-html'
+
+const { lang } = Astro.params
+const LANGS = new Set(['fr','es','en'])
+if (!lang || !LANGS.has(lang)) return Astro.redirect('/fr')
+
+const settings = await getSettings(lang)
+const aboutHtml = toHTML(settings?.about || [])
+---
+
+<BaseLayout lang={lang as any} title="À propos" settings={settings}>
+  <style>
+    main { max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
+  </style>
+  <main>
+    <h1>À propos</h1>
+    <div set:html={aboutHtml}></div>
+  </main>
+</BaseLayout>
