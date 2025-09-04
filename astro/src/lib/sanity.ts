@@ -9,3 +9,5 @@ export const sanity = createClient({
   perspective: 'published',                       // solo contenido publicado
 })
 
+// al final de src/lib/sanity.ts
+export { sanity as client }
