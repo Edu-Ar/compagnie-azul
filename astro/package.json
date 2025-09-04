@@ -16,6 +16,7 @@
     "groq": "^4.6.0"
   },
   "devDependencies": {
+    "@astrojs/cloudflare": "^12.6.7",
     "@astrojs/node": "^9.4.3"
   }
 }

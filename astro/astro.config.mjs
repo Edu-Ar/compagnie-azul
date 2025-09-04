@@ -1,9 +1,16 @@
+// astro.config.mjs
 import { defineConfig } from 'astro/config'
-import node from '@astrojs/node'
+import cloudflare from '@astrojs/cloudflare'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   output: 'server',
-  adapter: node({
-    mode: 'standalone',
-  }),
+  adapter: cloudflare(), // ← Cloudflare Pages/Workers
+//  vite: {
+//    resolve: {
+//      alias: {
+//        '@': fileURLToPath(new URL('./src', import.meta.url)), // import '@/...'
+//      },
+//    },
+//  },
 })
